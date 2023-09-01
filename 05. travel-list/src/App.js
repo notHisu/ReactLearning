@@ -28,7 +28,7 @@ export default function App() {
         onDeleteItems={handleDeleteItems}
         onTogglePacked={handleTogglePacked}
       />
-      <Stats />
+      <Stats items={items} />
     </div>
   );
 }
@@ -74,10 +74,22 @@ function Form({ onAddItems }) {
 }
 
 function PackingList({ items, onDeleteItems, onTogglePacked }) {
+  const [sortBy, setSortBy] = useState("input");
+  let sortedItems;
+
+  if (sortBy === "input") sortedItems = items;
+  if (sortBy === "description")
+    sortedItems = items
+      .slice()
+      .sort((a, b) => a.description.localeCompare(b.description));
+  if (sortBy === "packed")
+    sortedItems = items
+      .slice()
+      .sort((a, b) => Number(a.packed) - Number(b.packed));
   return (
     <div className="list">
       <ul>
-        {items.map((item) => (
+        {sortedItems.map((item) => (
           <Item
             item={item}
             key={item.id}
@@ -86,6 +98,13 @@ function PackingList({ items, onDeleteItems, onTogglePacked }) {
           />
         ))}
       </ul>
+      <div className="actions">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="input">Sort by input order</option>
+          <option value="description">Sort by description</option>
+          <option value="packed">Sort by packed status</option>
+        </select>
+      </div>
     </div>
   );
 }
@@ -102,10 +121,26 @@ function Item({ item, onDeleteItems, onTogglePacked }) {
   );
 }
 
-function Stats() {
+function Stats({ items }) {
+  if (!items.length)
+    return (
+      <footer className="stats">
+        <em>Start by adding some items to your list!</em>
+      </footer>
+    );
+  const numItems = items.length;
+  const numPacked = items.filter((item) => item.packed).length;
+  const percentage = Math.round((numPacked / numItems) * 100);
   return (
     <footer className="stats">
-      <em>You have X items on your list, and you already packed X (X%)</em>
+      {percentage === 100 ? (
+        <em>You are ready for your trip</em>
+      ) : (
+        <em>
+          You have {numItems} items on your list, and you already packed{" "}
+          {numPacked} ({percentage}%)
+        </em>
+      )}
     </footer>
   );
 }
